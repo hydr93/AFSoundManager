@@ -59,7 +59,6 @@
         
         dispatch_async(dispatch_get_main_queue(), ^{
             AVPlayerItem *playerItem = [[AVPlayerItem alloc] initWithAsset:asset];
-            _avplayeritem = playerItem;
             NSArray *metadata = [playerItem.asset commonMetadata];
             
             for (AVMetadataItem *metadataItem in metadata) {

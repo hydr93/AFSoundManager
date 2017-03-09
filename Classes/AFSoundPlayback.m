@@ -47,7 +47,8 @@ NSString * const AFSoundPlaybackFinishedNotification = @"kAFSoundPlaybackFinishe
     [asset loadValuesAsynchronouslyForKeys:keys completionHandler:^(){
         
         dispatch_async(dispatch_get_main_queue(), ^{
-            _player = [[AVPlayer alloc] initWithPlayerItem:item.avplayeritem];
+            AVPlayerItem *playerItem = [[AVPlayerItem alloc] initWithAsset:asset];
+            _player = [[AVPlayer alloc] initWithPlayerItem:playerItem];
             [_player play];
             _player.actionAtItemEnd = AVPlayerActionAtItemEndPause;
             
