@@ -41,18 +41,31 @@ NSString * const AFSoundPlaybackFinishedNotification = @"kAFSoundPlaybackFinishe
 
 -(void)setUpItem:(AFSoundItem *)item {
     
-    _player = [[AVPlayer alloc] initWithURL:item.URL];
-    [_player play];
-    _player.actionAtItemEnd = AVPlayerActionAtItemEndPause;
+    AVURLAsset *asset = [[AVURLAsset alloc] initWithURL:item.URL options:nil];
+    NSArray *keys = [NSArray arrayWithObject:@"playable"];
     
-    _status = AFSoundStatusPlaying;
-
-    _currentItem = item;
-    _currentItem.duration = (int)CMTimeGetSeconds(_player.currentItem.asset.duration);
+    [asset loadValuesAsynchronouslyForKeys:keys completionHandler:^(){
         
-    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
-    [[AVAudioSession sharedInstance] setActive:YES error:nil];
-    [[UIApplication sharedApplication] beginReceivingRemoteControlEvents];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            AVPlayerItem *playerItem = [[AVPlayerItem alloc] initWithAsset:asset];
+            _player = [[AVPlayer alloc] initWithPlayerItem:playerItem];
+            [_player play];
+            _player.actionAtItemEnd = AVPlayerActionAtItemEndPause;
+            
+            _status = AFSoundStatusPlaying;
+            
+            _currentItem = item;
+            _currentItem.duration = (int)CMTimeGetSeconds(_player.currentItem.asset.duration);
+            
+            [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
+            [[AVAudioSession sharedInstance] setActive:YES error:nil];
+            [[UIApplication sharedApplication] beginReceivingRemoteControlEvents];
+            
+            [_player pause];
+            _status = AFSoundStatusPaused;
+        });
+    }];
+
 }
 
 -(void)listenFeedbackUpdatesWithBlock:(feedbackBlock)block andFinishedBlock:(finishedBlock)finishedBlock {

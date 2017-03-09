@@ -52,35 +52,42 @@
 
 -(void)fetchMetadata {
     
-    AVPlayerItem *playerItem = [[AVPlayerItem alloc] initWithURL:_URL];
+    AVURLAsset *asset = [[AVURLAsset alloc] initWithURL:_URL options:nil];
+    NSArray *keys = [NSArray arrayWithObject:@"playable"];
     
-    NSArray *metadata = [playerItem.asset commonMetadata];
-    
-    for (AVMetadataItem *metadataItem in metadata) {
+    [asset loadValuesAsynchronouslyForKeys:keys completionHandler:^(){
         
-        [metadataItem loadValuesAsynchronouslyForKeys:@[AVMetadataKeySpaceCommon] completionHandler:^{
+        dispatch_async(dispatch_get_main_queue(), ^{
+            AVPlayerItem *playerItem = [[AVPlayerItem alloc] initWithAsset:asset];
+            NSArray *metadata = [playerItem.asset commonMetadata];
             
-            if ([metadataItem.commonKey isEqualToString:@"title"]) {
+            for (AVMetadataItem *metadataItem in metadata) {
                 
-                _title = (NSString *)metadataItem.value;
-            } else if ([metadataItem.commonKey isEqualToString:@"albumName"]) {
-                
-                _album = (NSString *)metadataItem.value;
-            } else if ([metadataItem.commonKey isEqualToString:@"artist"]) {
-                
-                _artist = (NSString *)metadataItem.value;
-            } else if ([metadataItem.commonKey isEqualToString:@"artwork"]) {
-                
-                if ([metadataItem.keySpace isEqualToString:AVMetadataKeySpaceID3]) {
+                [metadataItem loadValuesAsynchronouslyForKeys:@[AVMetadataKeySpaceCommon] completionHandler:^{
                     
-                    _artwork = [UIImage imageWithData:[[metadataItem.value copyWithZone:nil] objectForKey:@"data"]];
-                } else if ([metadataItem.keySpace isEqualToString:AVMetadataKeySpaceiTunes]) {
-                    
-                    _artwork = [UIImage imageWithData:[metadataItem.value copyWithZone:nil]];
-                }
+                    if ([metadataItem.commonKey isEqualToString:@"title"]) {
+                        
+                        _title = (NSString *)metadataItem.value;
+                    } else if ([metadataItem.commonKey isEqualToString:@"albumName"]) {
+                        
+                        _album = (NSString *)metadataItem.value;
+                    } else if ([metadataItem.commonKey isEqualToString:@"artist"]) {
+                        
+                        _artist = (NSString *)metadataItem.value;
+                    } else if ([metadataItem.commonKey isEqualToString:@"artwork"]) {
+                        
+                        if ([metadataItem.keySpace isEqualToString:AVMetadataKeySpaceID3]) {
+                            
+                            _artwork = [UIImage imageWithData:[[metadataItem.value copyWithZone:nil] objectForKey:@"data"]];
+                        } else if ([metadataItem.keySpace isEqualToString:AVMetadataKeySpaceiTunes]) {
+                            
+                            _artwork = [UIImage imageWithData:[metadataItem.value copyWithZone:nil]];
+                        }
+                    }
+                }];
             }
-        }];
-    }
+        });
+    }];
 }
 
 -(void)setInfoFromItem:(AVPlayerItem *)item {
